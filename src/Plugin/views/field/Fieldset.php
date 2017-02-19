@@ -19,6 +19,32 @@ class Fieldset extends FieldPluginBase {
   /**
    *
    */
+  static public function getFieldParents(ViewExecutable $view, $field_name) {
+    $parents = [];
+    $current_field = $field_name;
+    while ($parent = self::getFieldParent($view, $current_field)) {
+      $parents[] = $parent;
+      $current_field = $parent;
+    }
+
+    return $parents;
+  }
+
+  /**
+   *
+   */
+  static public function getFieldParent(ViewExecutable $view, $field_name) {
+    $fieldsets = self::getAllFieldsets($view);
+    foreach ($fieldsets as $fieldset_name => $fieldset) {
+      if (in_array($field_name, $fieldset->getChildren())) {
+        return $fieldset_name;
+      }
+    }
+  }
+
+  /**
+   *
+   */
   static public function getWrapperTypes() {
     $types = &drupal_static(__METHOD__);
     if (!$types) {

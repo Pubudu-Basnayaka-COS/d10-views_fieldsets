@@ -1,6 +1,7 @@
 <?php
 
 use Drupal\views_fieldsets\Plugin\views\field\Fieldset;
+use Drupal\views_ui\ViewUI;
 
 /**
  * Implements hook_theme().
@@ -52,4 +53,38 @@ function views_fieldsets_preprocess_views_view_fields(&$vars) {
   $view = $vars['view'];
 
   Fieldset::replaceFieldsetHandlers($view, $vars['fields'], $vars['row']);
+}
+
+/**
+ * Implements hook_views_ui_display_tab_alter().
+ */
+function views_fieldsets_views_ui_display_tab_alter(&$build, ViewUI $ui_view, $display_id) {
+  $view = $ui_view->getExecutable();
+  $view->build($display_id);
+  $fieldsets = Fieldset::getAllFieldsets($view);
+
+  foreach ($build['details']['columns']['first']['fields']['fields'] as $field_name => &$renderable) {
+    // Noticable fieldsets.
+    if (isset($fieldsets[$field_name])) {
+      $renderable['#class'][] = 'views-fieldsets-fieldset';
+    }
+
+    // Indentation for all fields.
+    $renderable['#class'][] = 'views-fieldsets-level-' . count(Fieldset::getFieldParents($view, $field_name));
+
+    unset($renderable);
+  }
+
+  $build['details']['#attached']['library'][] = 'views_fieldsets/admin';
+}
+
+/**
+ * Implements hook_preprocess_views_ui_display_tab_setting().
+ */
+function views_fieldsets_preprocess_views_ui_display_tab_setting(&$vars) {
+  // Copy #class from views_fieldsets_views_ui_display_tab_alter() to renderable #attributes.
+  if (!empty($vars['class'])) {
+    $vars['attributes'] += ['class' => []];
+    $vars['attributes']['class'] = array_merge($vars['attributes']['class'], $vars['class']);
+  }
 }
