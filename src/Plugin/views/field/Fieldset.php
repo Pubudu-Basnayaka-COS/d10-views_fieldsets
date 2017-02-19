@@ -3,6 +3,7 @@
 namespace Drupal\views_fieldsets\Plugin\views\field;
 
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Render\Markup;
 use Drupal\views\Plugin\views\field\FieldPluginBase;
 use Drupal\views\ResultRow;
 use Drupal\views\ViewExecutable;
@@ -146,6 +147,20 @@ class Fieldset extends FieldPluginBase {
       '#type' => 'checkbox',
       '#title' => t('Collapsed'),
       '#default_value' => $this->options['collapsed'],
+    ];
+
+    // Available tokens list. Not as pretty as FieldPluginBase, because it doesn't have a reusable method.
+    $form['tokens'] = [
+      '#theme' => 'item_list',
+      '#title' => t('Replacement patterns'),
+      '#items' => array_map(function($token) {
+          return Markup::create("<code>$token</code>");
+          // return [
+          //   '#type' => 'inline_template',
+          //   '#template' => '<code>{{ token }}</code>',
+          //   '#context' => ['token' => $token],
+          // ];
+      }, array_keys($this->getRenderTokens([]))),
     ];
   }
 

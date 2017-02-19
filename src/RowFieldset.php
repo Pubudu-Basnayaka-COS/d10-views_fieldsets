@@ -48,6 +48,20 @@ class RowFieldset {
   /**
    *
    */
+  public function get_wrapper_element() {
+    return '';
+  }
+
+  /**
+   *
+   */
+  public function get_element_type() {
+    return '';
+  }
+
+  /**
+   *
+   */
   public function render() {
     $element = [
       '#theme' => 'views_fieldsets_' . $this->getWrapperType(),
