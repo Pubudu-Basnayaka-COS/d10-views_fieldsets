@@ -1,4 +1,5 @@
-.views-ui-display-tab-bucket.field .views-fieldsets-fieldset {
+.views-ui-display-tab-bucket.field .views-fieldsets-fieldset,
+.draggable.views-fieldsets-fieldset {
 	font-weight: bold;
 }
 .views-ui-display-tab-bucket.field .views-fieldsets-level-1 {

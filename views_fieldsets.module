@@ -1,5 +1,6 @@
 <?php
 
+use Drupal\Core\Render\Element;
 use Drupal\views_fieldsets\Plugin\views\field\Fieldset;
 use Drupal\views_ui\ViewUI;
 
@@ -35,13 +36,13 @@ function views_fieldsets_theme() {
  * Implements hook_views_data().
  */
 function views_fieldsets_views_data() {
-  $data['views']['fieldset'] = array(
+  $data['views']['fieldset'] = [
     'title' => t('Fieldset'),
     'help' => t('Create a group of fields.'),
-    'field' => array(
+    'field' => [
       'id' => 'fieldset',
-    ),
-  );
+    ],
+  ];
 
   return $data;
 }
@@ -62,6 +63,8 @@ function views_fieldsets_views_ui_display_tab_alter(&$build, ViewUI $ui_view, $d
   $view = $ui_view->getExecutable();
   $view->build($display_id);
   $fieldsets = Fieldset::getAllFieldsets($view);
+
+  // @todo Sort by weight, because nested weight is messed up.
 
   foreach ($build['details']['columns']['first']['fields']['fields'] as $field_name => &$renderable) {
     // Noticable fieldsets.
@@ -87,4 +90,89 @@ function views_fieldsets_preprocess_views_ui_display_tab_setting(&$vars) {
     $vars['attributes'] += ['class' => []];
     $vars['attributes']['class'] = array_merge($vars['attributes']['class'], $vars['class']);
   }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter() for views_ui_rearrange_form().
+ */
+function views_fieldsets_form_views_ui_rearrange_form_alter(&$form, &$form_state) {
+  $ui_view = $form_state->get('view');
+  $view = $ui_view->getExecutable();
+  $view->build($form_state->get('display_id'));
+  $fieldsets = Fieldset::getAllFieldsets($view);
+
+  foreach (Element::children($form['fields']) as $field_name) {
+    $row = &$form['fields'][$field_name];
+    if (isset($fieldsets[$field_name])) {
+      $row['#attributes']['class'][] = 'views-fieldsets-fieldset';
+    }
+    else {
+      $row['#attributes']['class'][] = 'tabledrag-leaf';
+    }
+
+    $depth = count(Fieldset::getFieldParents($view, $field_name));
+
+    $row['name'] = [
+      'indent' => $depth > 0 ? ['#theme' => 'indentation', '#size' => $depth] : [],
+      'name' => $row['name'],
+      'field_name' => [
+        '#type' => 'hidden',
+        '#value' => $field_name,
+        '#attributes' => ['class' => ['field-name']],
+        '#size' => 4,
+      ],
+      'hierarchy' => [
+        '#type' => 'hidden',
+        '#default_value' => Fieldset::getFieldParent($view, $field_name),
+        '#attributes' => ['class' => ['hierarchy']],
+        '#size' => 4,
+      ],
+      'depth' => [
+        '#type' => 'hidden',
+        '#default_value' => $depth,
+        '#attributes' => ['class' => ['depth']],
+        '#size' => 4,
+      ],
+    ];
+
+    unset($row);
+  }
+
+  $form['fields']['#tabledrag'][] = [
+    'action' => 'match',
+    'relationship' => 'parent',
+    'group' => 'hierarchy',
+    'hidden' => FALSE,
+    'subgroup' => 'hierarchy',
+    'source' => 'field-name',
+  ];
+  $form['fields']['#tabledrag'][] = [
+    'action' => 'depth',
+    'relationship' => 'group',
+    'group' => 'depth',
+    'hidden' => FALSE,
+  ];
+
+  $form['actions']['submit']['#submit'][] = 'views_fieldsets_views_ui_rearrange_form_submit';
+}
+
+/**
+ * Submit handler for views_ui_rearrange_form().
+ */
+function views_fieldsets_views_ui_rearrange_form_submit($form, $form_state) {
+  $ui_view = $form_state->get('view');
+  $view = $ui_view->getExecutable();
+  $view->build($form_state->get('display_id'));
+  $fieldsets = Fieldset::getAllFieldsets($view);
+
+  // @todo Sort by weight, because nested weight is messed up.
+
+  $hierarchy = array_combine(array_keys($fieldsets), array_fill(0, count($fieldsets), []));
+  foreach ($form_state->getValue('fields') as $field_name => $data) {
+    if ($parent = $data['name']['hierarchy']) {
+      $hierarchy[$parent][] = $field_name;
+    }
+  }
+
+  // @todo Save hierarchy into Fieldset fields.
 }
