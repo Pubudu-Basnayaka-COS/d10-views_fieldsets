@@ -117,16 +117,8 @@ class RowFieldset {
   /**
    *
    */
-  public function addChild(&$fields, $field_name) {
-    $this->_addChild($field_name, $fields[$field_name]);
-    unset($fields[$field_name]);
-  }
-
-  /**
-   *
-   */
-  public function _addChild($field_name, $field) {
-    $this->children[$field_name] = $field;
+  public function addChild(array $fields, $field_name) {
+    $this->children[$field_name] = $fields[$field_name];
   }
 
 }

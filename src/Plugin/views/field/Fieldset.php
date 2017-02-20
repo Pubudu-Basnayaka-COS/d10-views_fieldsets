@@ -90,13 +90,18 @@ class Fieldset extends FieldPluginBase {
     }
 
     // Move Children.
+    $moved = [];
     foreach ($fieldsets as $fieldset_name => $fieldset) {
       foreach ($fieldset->getChildren() as $child_name) {
         if (isset($fields[$child_name])) {
           $fields[$fieldset_name]->addChild($fields, $child_name);
+          $moved[$child_name] = $child_name;
         }
       }
     }
+
+    // Remove moved Children.
+    $fields = array_diff_key($fields, $moved);
 
     return $fieldsets;
   }
