@@ -1,5 +1,6 @@
 <?php
 
+use Drupal\Component\Utility\SortArray;
 use Drupal\Core\Render\Element;
 use Drupal\views_fieldsets\Plugin\views\field\Fieldset;
 use Drupal\views_ui\ViewUI;
@@ -63,8 +64,6 @@ function views_fieldsets_views_ui_display_tab_alter(&$build, ViewUI $ui_view, $d
   $view = $ui_view->getExecutable();
   $view->build($display_id);
   $fieldsets = Fieldset::getAllFieldsets($view);
-
-  // @todo Sort by weight, because nested weight is messed up.
 
   foreach ($build['details']['columns']['first']['fields']['fields'] as $field_name => &$renderable) {
     // Noticable fieldsets.
@@ -161,18 +160,59 @@ function views_fieldsets_form_views_ui_rearrange_form_alter(&$form, &$form_state
  */
 function views_fieldsets_views_ui_rearrange_form_submit($form, $form_state) {
   $ui_view = $form_state->get('view');
+  $display_id = $form_state->get('display_id');
   $view = $ui_view->getExecutable();
-  $view->build($form_state->get('display_id'));
+  $view->setDisplay($display_id);
+  $view->build($display_id);
   $fieldsets = Fieldset::getAllFieldsets($view);
 
-  // @todo Sort by weight, because nested weight is messed up.
+  // Sort 1-dimensionally (wrong overall, but right per level).
+  $input_fields = $form_state->getValue('fields');
+  uasort($input_fields, [SortArray::class, 'sortByWeightElement']);
+  $fields_order = array_keys($input_fields);
 
+  // Create [field => parent] map.
+  $input_fields = array_map(function($field) {
+    return $field['name']['hierarchy'];
+  }, $input_fields);
+
+  // Sort overall: level by level, n-dimensionally following the tree down.
+  $input_fields_weights = [];
+  foreach ($input_fields as $field_name => $fieldset) {
+    $parents = Fieldset::getUIFieldParents($input_fields, $field_name);
+    $id = array_reverse(array_merge([$field_name], $parents));
+    $id = array_map(function($field) use ($fields_order) {
+      return array_search($field, $fields_order);
+    }, $id);
+    $id = implode('.', $id);
+    $input_fields_weights[$field_name] = $id;
+  }
+  uasort($input_fields_weights, 'strnatcmp');
+  $input_fields_weights = array_flip(array_keys($input_fields_weights));
+
+  // Create hierarchy (fieldset-based), in the right order.
   $hierarchy = array_combine(array_keys($fieldsets), array_fill(0, count($fieldsets), []));
-  foreach ($form_state->getValue('fields') as $field_name => $data) {
-    if ($parent = $data['name']['hierarchy']) {
+  foreach ($input_fields_weights as $field_name => $x) {
+    if ($parent = $input_fields[$field_name]) {
       $hierarchy[$parent][] = $field_name;
     }
   }
 
-  // @todo Save hierarchy into Fieldset fields.
+  // Fetch fields config from relevant display (just saved by Drupal\views_ui\Form\Ajax\Rearrange).
+  $display = $view->displayHandlers->get($display_id);
+  $display_fields = $display->getOption('fields');
+
+  // Update hierarchy into all fieldset fields, in the right order.
+  foreach ($hierarchy as $fieldset_name => $children) {
+    $display_fields[$fieldset_name]['fields'] = $children;
+  }
+
+  // Sort the fields storage in the right order too!
+  uksort($display_fields, function($a, $b) use ($input_fields_weights) {
+    return $input_fields_weights[$a] - $input_fields_weights[$b];
+  });
+
+  // Save and save.
+  $display->setOption('fields', $display_fields);
+  $ui_view->cacheSet();
 }

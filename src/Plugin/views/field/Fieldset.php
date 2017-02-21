@@ -19,6 +19,27 @@ class Fieldset extends FieldPluginBase {
   /**
    *
    */
+  static public function getUIFieldParents(array $fields, $field_name) {
+    $parents = [];
+    $current_field = $field_name;
+    while ($parent = self::getUIFieldParent($fields, $current_field)) {
+      $parents[] = $parent;
+      $current_field = $parent;
+    }
+
+    return $parents;
+  }
+
+  /**
+   *
+   */
+  static public function getUIFieldParent(array $fields, $field_name) {
+    return $fields[$field_name];
+  }
+
+  /**
+   *
+   */
   static public function getFieldParents(ViewExecutable $view, $field_name) {
     $parents = [];
     $current_field = $field_name;
@@ -144,11 +165,11 @@ class Fieldset extends FieldPluginBase {
       '#description' => 'DEBUG: comma-separated list of field names in this fieldset.',
     ];
 
-    $help_tokenized = t('With row tokens, eg. <code>{{ title }}</code>.');
+    $help_tokenized = $this->t('With row tokens, eg. <code>{{ title }}</code>.');
 
     $form['wrapper'] = [
       '#type' => 'select',
-      '#title' => t('Wrapper type'),
+      '#title' => $this->t('Wrapper type'),
       '#options' => self::getWrapperTypes(),
       '#default_value' => $this->options['wrapper'],
       '#required' => TRUE,
@@ -156,34 +177,34 @@ class Fieldset extends FieldPluginBase {
 
     $form['legend'] = [
       '#type' => 'textfield',
-      '#title' => t('Fieldset legend'),
+      '#title' => $this->t('Fieldset legend'),
       '#default_value' => $this->options['legend'],
       '#description' => $help_tokenized,
     ];
 
     $form['classes'] = [
       '#type' => 'textfield',
-      '#title' => t('Wrapper classes'),
+      '#title' => $this->t('Wrapper classes'),
       '#default_value' => $this->options['classes'],
-      '#description' => $help_tokenized . ' ' . t('Separate classes with DOUBLE SPACES. Single spaces and much else will be converted to valid class name.'),
+      '#description' => $help_tokenized . ' ' . $this->t('Separate classes with DOUBLE SPACES. Single spaces and much else will be converted to valid class name.'),
     ];
 
     $form['collapsible'] = [
       '#type' => 'checkbox',
-      '#title' => t('Collapsible'),
+      '#title' => $this->t('Collapsible'),
       '#default_value' => $this->options['collapsible'],
     ];
 
     $form['collapsed'] = [
       '#type' => 'checkbox',
-      '#title' => t('Collapsed'),
+      '#title' => $this->t('Collapsed'),
       '#default_value' => $this->options['collapsed'],
     ];
 
     // Available tokens list. Not as pretty as FieldPluginBase, because it doesn't have a reusable method.
     $form['tokens'] = [
       '#theme' => 'item_list',
-      '#title' => t('Replacement patterns'),
+      '#title' => $this->t('Replacement patterns'),
       '#items' => array_map(function($token) {
           return Markup::create("<code>$token</code>");
           // return [
