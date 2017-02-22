@@ -100,6 +100,12 @@ function views_fieldsets_form_views_ui_rearrange_form_alter(&$form, &$form_state
   $view->build($form_state->get('display_id'));
   $fieldsets = Fieldset::getAllFieldsets($view);
 
+  $debug_tabledrag = [
+    // '#type' => 'textfield',
+    // '#size' => 4,
+    // '#theme_wrappers' => [],
+  ];
+
   foreach (Element::children($form['fields']) as $field_name) {
     $row = &$form['fields'][$field_name];
     if (isset($fieldsets[$field_name])) {
@@ -118,39 +124,42 @@ function views_fieldsets_form_views_ui_rearrange_form_alter(&$form, &$form_state
         '#type' => 'hidden',
         '#value' => $field_name,
         '#attributes' => ['class' => ['field-name']],
-        '#size' => 4,
       ],
-      'hierarchy' => [
+      'hierarchy' => $debug_tabledrag + [
         '#type' => 'hidden',
         '#default_value' => Fieldset::getFieldParent($view, $field_name),
         '#attributes' => ['class' => ['hierarchy']],
-        '#size' => 4,
       ],
-      'depth' => [
+      'depth' => $debug_tabledrag + [
         '#type' => 'hidden',
         '#default_value' => $depth,
         '#attributes' => ['class' => ['depth']],
-        '#size' => 4,
       ],
     ];
 
     unset($row);
   }
 
-  $form['fields']['#tabledrag'][] = [
+  $form['fields']['#tabledrag'] = [];
+  $form['fields']['#tabledrag'][] = array(
     'action' => 'match',
     'relationship' => 'parent',
     'group' => 'hierarchy',
-    'hidden' => FALSE,
     'subgroup' => 'hierarchy',
     'source' => 'field-name',
-  ];
-  $form['fields']['#tabledrag'][] = [
+    'hidden' => FALSE,
+  );
+  $form['fields']['#tabledrag'][] = array(
     'action' => 'depth',
     'relationship' => 'group',
     'group' => 'depth',
     'hidden' => FALSE,
-  ];
+  );
+  $form['fields']['#tabledrag'][] = array(
+    'action' => 'order',
+    'relationship' => 'sibling',
+    'group' => 'weight',
+  );
 
   $form['actions']['submit']['#submit'][] = 'views_fieldsets_views_ui_rearrange_form_submit';
 }
