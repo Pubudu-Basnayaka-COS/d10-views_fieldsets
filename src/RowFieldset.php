@@ -3,6 +3,7 @@
 namespace Drupal\views_fieldsets;
 
 use Drupal\Component\Utility\Html;
+use Drupal\Core\Render\Markup;
 use Drupal\views\ResultRow;
 use Drupal\views_fieldsets\Plugin\views\field\Fieldset;
 
@@ -67,7 +68,7 @@ class RowFieldset {
     $element = [
       '#theme' => 'views_fieldsets_' . $this->getWrapperType(),
       '#fields' => $this->children,
-      '#legend' => $this->getLegend(),
+      '#legend' => Markup::create($this->getLegend()),
       '#collapsible' => (bool) $this->handler->options['collapsible'],
       '#collapsed' => (bool) $this->handler->options['collapsed'],
       '#classes' => $this->getClasses(),
