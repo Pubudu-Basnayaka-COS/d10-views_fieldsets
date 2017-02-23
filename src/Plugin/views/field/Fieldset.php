@@ -154,15 +154,13 @@ class Fieldset extends FieldPluginBase {
    * {@inheritdoc}
    */
   public function buildOptionsForm(&$form, FormStateInterface $form_state) {
-    // $form['fields'] = [
-    //   '#type' => 'value',
-    //   '#value' => $this->options['fields'],
-    // ];
+    $fake_form = [];
+    parent::buildOptionsForm($fake_form, $form_state);
+    $form['admin_label'] = $fake_form['admin_label'];
+
     $form['fields'] = [
-      '#type' => 'textfield',
-      '#title' => 'DEBUG: FIELDS',
-      '#default_value' => implode(', ', $this->options['fields']),
-      '#description' => 'DEBUG: comma-separated list of field names in this fieldset.',
+      '#type' => 'value',
+      '#value' => $this->options['fields'],
     ];
 
     $help_tokenized = $this->t('With row tokens, eg. <code>{{ title }}</code>.');
@@ -214,17 +212,6 @@ class Fieldset extends FieldPluginBase {
           // ];
       }, array_keys($this->getRenderTokens([]))),
     ];
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function submitOptionsForm(&$form, FormStateInterface $form_state) {
-    $options = &$form_state->getValue('options');
-
-    $fields = $options['fields'];
-    $fields = array_filter(array_map('trim', explode(',', $fields)));
-    $options['fields'] = $fields;
   }
 
   /**
