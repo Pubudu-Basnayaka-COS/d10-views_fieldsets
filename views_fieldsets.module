@@ -63,21 +63,23 @@ function views_fieldsets_preprocess_views_view_fields(&$vars) {
 function views_fieldsets_views_ui_display_tab_alter(&$build, ViewUI $ui_view, $display_id) {
   $view = $ui_view->getExecutable();
   $view->build($display_id);
-  $fieldsets = Fieldset::getAllFieldsets($view);
+  $ui_view->set('executable', $view);
+  if (Fieldset::isFieldsetView($view)) {
+    $fieldsets = Fieldset::getAllFieldsets($view);
 
-  foreach ($build['details']['columns']['first']['fields']['fields'] as $field_name => &$renderable) {
-    // Noticable fieldsets.
-    if (isset($fieldsets[$field_name])) {
-      $renderable['#class'][] = 'views-fieldsets-fieldset';
+    foreach ($build['details']['columns']['first']['fields']['fields'] as $field_name => &$renderable) {
+      // Noticable fieldsets.
+      if (isset($fieldsets[$field_name])) {
+        $renderable['#class'][] = 'views-fieldsets-fieldset';
+      }
+
+      // Indentation for all fields.
+      $renderable['#class'][] = 'views-fieldsets-level-' . count(Fieldset::getFieldParents($view, $field_name));
+      unset($renderable);
     }
 
-    // Indentation for all fields.
-    $renderable['#class'][] = 'views-fieldsets-level-' . count(Fieldset::getFieldParents($view, $field_name));
-
-    unset($renderable);
+    $build['details']['#attached']['library'][] = 'views_fieldsets/admin';
   }
-
-  $build['details']['#attached']['library'][] = 'views_fieldsets/admin';
 }
 
 /**
