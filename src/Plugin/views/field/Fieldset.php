@@ -10,14 +10,14 @@ use Drupal\views\ViewExecutable;
 use Drupal\views_fieldsets\RowFieldset;
 
 /**
- * @ingroup views_field_handlers
+ * @ingroup views_field_handlers.
  *
- * @ViewsField("fieldset")
+ * @ViewsField("fieldset").
  */
 class Fieldset extends FieldPluginBase {
 
   /**
-   *
+   * {@inheritdoc}
    */
   static public function getUIFieldParents(array $fields, $field_name) {
     $parents = [];
@@ -26,19 +26,18 @@ class Fieldset extends FieldPluginBase {
       $parents[] = $parent;
       $current_field = $parent;
     }
-
     return $parents;
   }
 
   /**
-   *
+   * {@inheritdoc}
    */
   static public function getUIFieldParent(array $fields, $field_name) {
     return $fields[$field_name];
   }
 
   /**
-   *
+   * {@inheritdoc}
    */
   static public function getFieldParents(ViewExecutable $view, $field_name) {
     $parents = [];
@@ -47,12 +46,11 @@ class Fieldset extends FieldPluginBase {
       $parents[] = $parent;
       $current_field = $parent;
     }
-
     return $parents;
   }
 
   /**
-   *
+   * {@inheritdoc}
    */
   static public function getFieldParent(ViewExecutable $view, $field_name) {
     $fieldsets = self::getAllFieldsets($view);
@@ -61,23 +59,27 @@ class Fieldset extends FieldPluginBase {
         return $fieldset_name;
       }
     }
+    return FALSE;
   }
 
   /**
-   *
+   * {@inheritdoc}
    */
   static public function getWrapperTypes() {
     $types = &drupal_static(__METHOD__);
     if (!$types) {
       // @todo Get from hook_theme() definitions?
-      $types = ['details' => 'details', 'fieldset' => 'fieldset', 'div' => 'div'];
+      $types = [
+        'details' => 'details',
+        'fieldset' => 'fieldset',
+        'div' => 'div',
+      ];
     }
-
     return $types;
   }
 
   /**
-   *
+   * {@inheritdoc}
    */
   static public function isFieldsetView(ViewExecutable $view) {
     foreach ($view->field as $field) {
@@ -89,27 +91,25 @@ class Fieldset extends FieldPluginBase {
   }
 
   /**
-   *
+   * {@inheritdoc}
    */
   static public function getAllFieldsets(ViewExecutable $view) {
-    return array_filter($view->field, function($field) {
+    return array_filter($view->field, function ($field) {
       return $field instanceof self;
     });
   }
 
   /**
-   *
+   * {@inheritdoc}
    */
   static public function replaceFieldsetHandlers(ViewExecutable $view, array &$fields, ResultRow $row) {
     $fieldsets = self::getAllFieldsets($view);
-
     // Replace Fieldsets.
     foreach ($fields as $name => $field) {
       if (isset($fieldsets[$name])) {
         $fields[$name] = new RowFieldset($field, $row);
       }
     }
-
     // Move Children.
     $moved = [];
     foreach ($fieldsets as $fieldset_name => $fieldset) {
@@ -120,15 +120,13 @@ class Fieldset extends FieldPluginBase {
         }
       }
     }
-
     // Remove moved Children.
     $fields = array_diff_key($fields, $moved);
-
     return $fieldsets;
   }
 
   /**
-   *
+   * {@inheritdoc}
    */
   public function getChildren() {
     return $this->options['fields'];
@@ -139,14 +137,12 @@ class Fieldset extends FieldPluginBase {
    */
   protected function defineOptions() {
     $options = parent::defineOptions();
-
     $options['fields'] = ['default' => []];
     $options['wrapper'] = ['default' => 'fieldset'];
     $options['legend'] = ['default' => ''];
     $options['classes'] = ['default' => ''];
     $options['collapsible'] = ['default' => TRUE];
     $options['collapsed'] = ['default' => FALSE];
-
     return $options;
   }
 
@@ -157,14 +153,11 @@ class Fieldset extends FieldPluginBase {
     $fake_form = [];
     parent::buildOptionsForm($fake_form, $form_state);
     $form['admin_label'] = $fake_form['admin_label'];
-
     $form['fields'] = [
       '#type' => 'value',
       '#value' => $this->options['fields'],
     ];
-
-    $help_tokenized = $this->t('With row tokens, eg. <code>{{ title }}</code>.');
-
+    $help_token = $this->t('With row tokens, eg. <code>{{ title }}</code>.');
     $form['wrapper'] = [
       '#type' => 'select',
       '#title' => $this->t('Wrapper type'),
@@ -172,44 +165,34 @@ class Fieldset extends FieldPluginBase {
       '#default_value' => $this->options['wrapper'],
       '#required' => TRUE,
     ];
-
     $form['legend'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Fieldset legend'),
       '#default_value' => $this->options['legend'],
-      '#description' => $help_tokenized,
+      '#description' => $help_token,
     ];
-
     $form['classes'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Wrapper classes'),
       '#default_value' => $this->options['classes'],
-      '#description' => $help_tokenized . ' ' . $this->t('Separate classes with DOUBLE SPACES. Single spaces and much else will be converted to valid class name.'),
+      '#description' => $help_token . ' ' . $this->t('Separate classes with DOUBLE SPACES. Single spaces and much else will be converted to valid class name.'),
     ];
-
     $form['collapsible'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Collapsible'),
       '#default_value' => $this->options['collapsible'],
     ];
-
     $form['collapsed'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Collapsed'),
       '#default_value' => $this->options['collapsed'],
     ];
-
     // Available tokens list. Not as pretty as FieldPluginBase, because it doesn't have a reusable method.
     $form['tokens'] = [
       '#theme' => 'item_list',
       '#title' => $this->t('Replacement patterns'),
-      '#items' => array_map(function($token) {
-          return Markup::create("<code>$token</code>");
-          // return [
-          //   '#type' => 'inline_template',
-          //   '#template' => '<code>{{ token }}</code>',
-          //   '#context' => ['token' => $token],
-          // ];
+      '#items' => array_map(function ($token) {
+        return Markup::create("<code>$token</code>");
       }, array_keys($this->getRenderTokens([]))),
     ];
   }
