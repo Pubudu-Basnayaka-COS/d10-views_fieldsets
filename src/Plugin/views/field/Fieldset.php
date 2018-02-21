@@ -219,4 +219,10 @@ class Fieldset extends FieldPluginBase {
     return FALSE;
   }
 
+  /**
+   * Override default unneeded method to avoid PHP notices.
+   */
+  public function submitOptionsForm(&$form, FormStateInterface $form_state) {
+  }
+
 }
