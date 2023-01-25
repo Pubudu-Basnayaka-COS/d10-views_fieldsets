@@ -15,7 +15,7 @@ use Drupal\views_ui\ViewUI;
  */
 function views_fieldsets_theme() {
   $vars = ['fields' => [], 'classes' => ''];
-  $path = drupal_get_path('module', 'views_fieldsets');
+  $path = \Drupal::service('extension.list.module')->getPath('views_fieldsets');
   $hooks['views_fieldsets_fieldset'] = [
     'variables' => $vars + [
         'legend' => '',

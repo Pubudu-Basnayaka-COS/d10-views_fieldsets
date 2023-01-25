@@ -83,7 +83,7 @@ class RowFieldset {
       '#collapsed' => (bool) $this->handler->options['collapsed'],
       '#classes' => $this->getClasses(),
     ];
-    return render($element);
+    return \Drupal::service('renderer')->render($element);
   }
 
   /**
