@@ -1,0 +1,7 @@
+{
+    "name": "drupal/views_fieldsets",
+    "type": "drupal-module",
+    "description": "Adds fieldsets to Drupal Views.",
+    "homepage": "http://drupal.org/project/views_fieldsets",
+    "license": "GPL-2.0-or-later"
+}
